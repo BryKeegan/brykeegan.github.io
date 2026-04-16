@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { readFile } from "fs/promises";
-import { extname, join } from "path";
+import { extname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -29,7 +29,12 @@ createServer(async (req, res) => {
   urlPath = urlPath.split("?")[0];
 
   try {
-    const filePath = join(__dirname, urlPath);
+    const filePath = resolve(join(__dirname, urlPath));
+    if (!filePath.startsWith(resolve(__dirname))) {
+      res.writeHead(403, { "Content-Type": "text/plain" });
+      res.end("403 Forbidden");
+      return;
+    }
     const data = await readFile(filePath);
     const mime = MIME[extname(urlPath).toLowerCase()] || "application/octet-stream";
     res.writeHead(200, { "Content-Type": mime });
